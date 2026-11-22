@@ -5,6 +5,8 @@
 ## Author: MeioNeiz
 ## X-Website: https://github.com/MeioNeiz/MeioAlts
 ## X-License: MIT
+## X-Curse-Project-ID: 1824015
+## X-Wago-ID: ZKbqQk61
 ## Category: Meio
 ## IconTexture: Interface\Icons\INV_Misc_GroupNeedMore
 ## AddonCompartmentFunc: MeioAlts_OnAddonCompartmentClick
