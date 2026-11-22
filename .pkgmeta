@@ -1,0 +1,12 @@
+package-as: AltView
+
+move-folders:
+  AltView/addons/AltView: AltView
+
+ignore:
+  - docs
+  - README.md
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

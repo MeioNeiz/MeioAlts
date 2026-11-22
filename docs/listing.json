@@ -1,0 +1,26 @@
+{
+  "title": "Meio AltView",
+  "summary": "All your characters in one list beside the Esc menu: gold, mail, rested XP and where they are.",
+  "cfCategory": "Miscellaneous",
+  "cfExtra": [
+    "Mail",
+    "Quests & Leveling"
+  ],
+  "wagoCategories": [
+    "Miscellaneous",
+    "Mail",
+    "Quests & Leveling"
+  ],
+  "gallery": [
+    {
+      "file": "before-after.png",
+      "title": "Before and after",
+      "description": "The Esc game menu alone, then with every character listed beside it"
+    },
+    {
+      "file": "tooltip.png",
+      "title": "A character's details",
+      "description": "The /alts window with the mouse on a priest: rested XP filling while logged out, mail, bags and professions"
+    }
+  ]
+}

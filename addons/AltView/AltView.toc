@@ -1,0 +1,16 @@
+## Interface: 16001
+## Title: AltView
+## Notes: Every character's gold, mail, rested XP, location and more, beside the Esc menu (where Logout is) and in /alts.
+## Version: 1.0.0
+## Author: MeioNeiz
+## X-Website: https://github.com/MeioNeiz/AltView
+## X-License: MIT
+## Category: Meio
+## IconTexture: Interface\Icons\INV_Misc_GroupNeedMore
+## AddonCompartmentFunc: AltView_OnAddonCompartmentClick
+## SavedVariables: AltViewDB
+
+Data.lua
+UI.lua
+Mail.lua
+Settings.lua
