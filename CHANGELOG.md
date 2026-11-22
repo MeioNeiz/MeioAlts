@@ -1,4 +1,4 @@
-# AltView
+# Meio Alts
 
 ## 1.0.0
 

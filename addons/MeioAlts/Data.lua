@@ -340,10 +340,10 @@ end
 events:RegisterEvent("PLAYER_LOGIN")
 events:SetScript("OnEvent", function(_, event, ...)
   if event == "PLAYER_LOGIN" then
-    AltViewDB = AltViewDB or {}
-    AltViewDB.chars = AltViewDB.chars or {}
-    AltViewDB.servers = AltViewDB.servers or {}
-    A.db = AltViewDB
+    MeioAltsDB = MeioAltsDB or {}
+    MeioAltsDB.chars = MeioAltsDB.chars or {}
+    MeioAltsDB.servers = MeioAltsDB.servers or {}
+    A.db = MeioAltsDB
     StartWhenRealmKnown(0)
     return
   end

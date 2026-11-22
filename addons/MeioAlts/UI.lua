@@ -1,6 +1,6 @@
 -- The character list: opens beside the Esc menu (where Logout is) and with /alts.
 -- Two modes: "menu" follows GameMenuFrame (anchored, shown and hidden with it), "alone" is the
--- /alts window (movable, position in AltViewDB.pos, Esc closes it).
+-- /alts window (movable, position in MeioAltsDB.pos, Esc closes it).
 local _, A = ...
 
 local ROW_H = 18
@@ -20,7 +20,7 @@ local COLS = {
   { key = "seen", label = "Seen", w = 46, justify = "RIGHT" },
 }
 local GAP = 8
-local PREFIX = "|cffb090ffAltView:|r "
+local PREFIX = "|cffb090ffMeioAlts:|r "
 
 -- set in Create: COLS without Items when Meionomics isn't loaded
 local cols, width
@@ -363,9 +363,9 @@ local function Create()
   width = (FRAME_PAD + PAD) * 2 - GAP
   for _, col in ipairs(cols) do width = width + (col.lead or 0) + col.w + GAP end
 
-  frame = CreateFrame("Frame", "AltViewFrame", UIParent, "ButtonFrameTemplate")
+  frame = CreateFrame("Frame", "MeioAltsFrame", UIParent, "ButtonFrameTemplate")
   ButtonFrameTemplate_HidePortrait(frame)
-  if frame.SetTitle then frame:SetTitle("AltView") end
+  if frame.SetTitle then frame:SetTitle("MeioAlts") end
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
   frame:SetClampedToScreen(true)
@@ -470,7 +470,7 @@ loader:SetScript("OnEvent", function()
 end)
 
 -- minimap addon compartment (.toc AddonCompartmentFunc)
-function AltView_OnAddonCompartmentClick() A.Toggle() end
+function MeioAlts_OnAddonCompartmentClick() A.Toggle() end
 
 local function Now(on) return " (now " .. (on and "on" or "off") .. ")" end
 
@@ -486,7 +486,7 @@ local function Help()
       .. "only)" .. Now(A.db.mailSend == true),
     "  |cffffd100/alts forget Name[-Realm]|r - remove a character from the list",
     "  |cffffd100/alts reset|r - put the window back",
-    "  Settings: Esc > Options > AddOns > AltView (|cffffd100/alts settings|r)",
+    "  Settings: Esc > Options > AddOns > MeioAlts (|cffffd100/alts settings|r)",
   }) do
     print(line)
   end
@@ -500,8 +500,8 @@ local function Switch(arg, current, set)
   else set(not current) end
 end
 
-SLASH_ALTVIEW1 = "/alts"
-SlashCmdList.ALTVIEW = function(msg)
+SLASH_MEIOALTS1 = "/alts"
+SlashCmdList.MEIOALTS = function(msg)
   local cmd, arg = strsplit(" ", strtrim(msg or ""), 2)
   cmd = cmd:lower()
   arg = arg and strtrim(arg)

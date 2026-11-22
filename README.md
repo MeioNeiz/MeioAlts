@@ -1,8 +1,8 @@
-# Meio AltView
+# Meio Alts
 
 All your characters in one list: gold, mail, XP and rested XP, and where they are.
 
-![The Esc game menu: before, the menu alone; with AltView, a list beside it of six
+![The Esc game menu: before, the menu alone; with Meio Alts, a list beside it of six
 characters with level, XP and rested XP bars, gold, mail, zone and when each was last
 played](docs/before-after.png)
 
@@ -19,7 +19,7 @@ window you can move. Each character joins the list the first time you log it in.
 - At the mailbox, a button beside To lists your characters, and Alt-click on a bag item
   attaches it
 
-Settings: Esc > Options > AddOns > AltView, or `/alts settings`.
+Settings: Esc > Options > AddOns > MeioAlts, or `/alts settings`.
 
 - `/alts`: open or close the window
 - `/alts menu on|off`: the list beside the Esc menu
@@ -36,7 +36,7 @@ Use your addon manager (CurseForge, Wago), or unzip a GitHub release into
 
 ## Feedback
 
-Bugs and ideas: [GitHub issues](https://github.com/MeioNeiz/AltView/issues)
+Bugs and ideas: [GitHub issues](https://github.com/MeioNeiz/MeioAlts/issues)
 
 ## More Meio addons
 

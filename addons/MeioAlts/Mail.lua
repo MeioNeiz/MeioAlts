@@ -3,7 +3,7 @@
 -- (A.db.mailSend): that Alt-click also sends, only to our own alts and only item-only mail.
 local _, A = ...
 
-local PREFIX = "|cffb090ffAltView:|r "
+local PREFIX = "|cffb090ffMeioAlts:|r "
 -- seconds; a send with no MAIL_SEND_SUCCESS / MAIL_FAILED by then counts as over
 local PENDING_TIMEOUT = 15
 local READY_TIMEOUT = 2
@@ -133,7 +133,7 @@ local function UpdatePicker()
 end
 
 local function CreatePicker()
-  picker = CreateFrame("Button", "AltViewMailPicker", SendMailFrame)
+  picker = CreateFrame("Button", "MeioAltsMailPicker", SendMailFrame)
   picker:SetSize(24, 24)
   picker:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 2, 0)
   picker:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
