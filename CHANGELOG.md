@@ -1,5 +1,13 @@
 # Meio Alts
 
+## 1.0.1
+
+- Same-name characters on different realms no longer overwrite each other: the realm is
+  blank at login on Forever, so characters are now told apart by their server too. Existing
+  records are kept and only merged when name, class and race match
+- Expired mail drops out of the mailbox gold and its warning clears
+- At max level, gold, zone and the rest are recorded again (only XP is skipped)
+
 ## 1.0.0
 
 - First release: every character in one list beside the Esc menu and in `/alts`, with

@@ -128,18 +128,24 @@ local function Professions(c)
 end
 
 -- UnitXPMax is 0 while the player isn't loaded (early login, logout), and level, money
--- and bags read wrong then too, so such a read keeps the last good values
-local function Snapshot()
+-- and bags read wrong then too, so such a read keeps the last good values. It can be 0 at
+-- max level for good, so there a level read as max counts as loaded, except at logout
+-- (the snapshots taken while playing are good, a logout one can't be told apart).
+local function Snapshot(atLogout)
   local c = me
   c.seen = time()
-  local xpMax = UnitXPMax("player")
-  if not xpMax or xpMax == 0 then return end
-  c.level = UnitLevel("player")
-  c.atMax = c.level >= MaxLevel()
-  c.xp, c.xpMax = UnitXP("player"), xpMax
-  -- the real value even while HideRested hides it, or the projection would start from 0
-  local rested = HideRested and HideRested.RealGetXPExhaustion or GetXPExhaustion
-  c.rested = rested() or 0
+  A.RealmKey() -- remembers this server id's realm once the realm is known
+  local xpMax, level = UnitXPMax("player"), UnitLevel("player")
+  local hasXP = xpMax and xpMax > 0
+  local atMax = level and level >= MaxLevel()
+  if not hasXP and (atLogout or not atMax) then return end
+  c.level, c.atMax = level, atMax
+  if hasXP then
+    c.xp, c.xpMax = UnitXP("player"), xpMax
+    -- the real value even while HideRested hides it, or the projection would start from 0
+    local rested = HideRested and HideRested.RealGetXPExhaustion or GetXPExhaustion
+    c.rested = rested() or 0
+  end
   c.resting = IsResting() or nil
   c.money = GetMoney()
   c.zone, c.subzone = GetRealZoneText(), GetSubZoneText()
@@ -162,20 +168,23 @@ local function Soon()
   end)
 end
 
--- Only while the mailbox is open: outside it the inbox reads as empty
+-- Only while the mailbox is open: outside it the inbox reads as empty. Each mail is kept
+-- with its expiry so A.Mail can drop it once the game has returned or deleted it.
 local mailOpen
 local function ScanInbox()
   local shown, total = GetInboxNumItems()
-  local m = { money = 0, cod = 0, items = 0, count = total or shown, at = time() }
+  local m = { money = 0, cod = 0, items = 0, count = total or shown, at = time(), list = {} }
   for i = 1, shown do
     local _, _, _, _, money, cod, daysLeft, numItems = GetInboxHeaderInfo(i)
-    m.money = m.money + (money or 0)
-    m.cod = m.cod + (cod or 0)
-    m.items = m.items + (numItems or 0)
+    local mail = { money = money or 0, cod = cod or 0, items = numItems or 0 }
+    m.money = m.money + mail.money
+    m.cod = m.cod + mail.cod
+    m.items = m.items + mail.items
     if daysLeft then
-      local expires = time() + math.floor(daysLeft * 86400)
-      if not m.expires or expires < m.expires then m.expires = expires end
+      mail.expires = time() + math.floor(daysLeft * 86400)
+      if not m.expires or mail.expires < m.expires then m.expires = mail.expires end
     end
+    m.list[#m.list + 1] = mail
   end
   me.mail, me.incoming, me.newMail = m, nil, nil
   A.Changed()
@@ -191,6 +200,27 @@ hooksecurefunc("SendMail", function(recipient)
   local cod = GetSendMailCOD and GetSendMailCOD() or 0
   sending = { key = A.Key(recipient), money = cod > 0 and 0 or GetSendMailMoney(), items = items }
 end)
+
+-- c.mail as it stands now: mail past its expiry is gone from the mailbox. Saves from before
+-- the per-mail list only know the first expiry: once past, the warning goes, counts stay.
+function A.Mail(c)
+  local m = c.mail
+  if not m then return end
+  local now = time()
+  if not m.list then
+    if not m.expires or m.expires > now then return m end
+    return { money = m.money, cod = m.cod, items = m.items, count = m.count, at = m.at }
+  end
+  local v = { money = 0, cod = 0, items = 0, count = m.count - #m.list, at = m.at }
+  for _, mail in ipairs(m.list) do
+    if not mail.expires or mail.expires > now then
+      v.money, v.cod, v.items = v.money + mail.money, v.cod + mail.cod, v.items + mail.items
+      v.count = v.count + 1
+      if mail.expires and (not v.expires or mail.expires < v.expires) then v.expires = mail.expires end
+    end
+  end
+  return v
+end
 
 local function Sent()
   local s = sending
@@ -225,7 +255,7 @@ local function RequestPlayed()
 end
 
 local handlers = {
-  PLAYER_LOGOUT = Snapshot,
+  PLAYER_LOGOUT = function() Snapshot(true) end,
   SKILL_LINES_CHANGED = function() Professions(me) end,
   TIME_PLAYED_MSG = function(total)
     me.played, me.playedAt = total, time()
@@ -271,32 +301,46 @@ local function MigrateBlankRealm(realm, realmName)
   for _, key in ipairs(blank) do
     local name, c = key:sub(1, -2), chars[key]
     chars[key] = nil
+    -- another class with this name is another character: never merged
+    local function Same(other) return not (c.class and other.class) or c.class == other.class end
     local twin
     for k, other in pairs(chars) do
-      if k:match("^(.-)%-") == name then
+      if k:match("^(.-)%-") == name and Same(other) then
         if twin then twin = false break end
         twin = other
       end
     end
+    local into = name .. "-" .. realm
     if twin then
       Merge(twin, c)
+    elseif chars[into] and not Same(chars[into]) then
+      chars[key] = c -- kept as it was rather than lost
     else
       -- none, or one per realm: this realm, where it was most likely played
       if c.realm == "" then c.realm = realmName end
-      local into = name .. "-" .. realm
       if chars[into] then Merge(chars[into], c) else chars[into] = c end
     end
   end
 end
 
--- the realm from a saved character with this name, when exactly one has one
-local function RealmFromTwin(name)
+-- The realm from a saved character with this name on this server id. A name alone could be
+-- another realm's character of the same name, whose record would then be overwritten. Saves
+-- from before the server id was kept (legacy = true, only once waiting for the realm gave up)
+-- also count when class and race match too and exactly one fits.
+local function RealmFromTwin(name, legacy)
+  local id = ServerID()
+  if not id then return end
+  local _, class = UnitClass("player")
+  local race = UnitRace("player")
   local found
-  for key in pairs(A.db.chars) do
+  for key, c in pairs(A.db.chars) do
     local n, r = key:match("^(.-)%-(.+)$")
     if n == name then
-      if found then return end
-      found = r
+      if c.server == id then return r end
+      if legacy and not c.server and c.class == class and (not c.race or c.race == race) then
+        if found then return end
+        found = r
+      end
     end
   end
   return found
@@ -319,6 +363,7 @@ local function Start(realm)
   me = A.db.chars[A.myKey] or {}
   A.db.chars[A.myKey] = me
   me.name = name
+  me.server = ServerID() or me.server
   me.realm = realmName or (me.realm ~= "" and me.realm) or realm
   me.race = UnitRace("player")
   me.className, me.class = UnitClass("player")
@@ -330,11 +375,12 @@ local function Start(realm)
   A.Changed()
 end
 
--- realm still unknown at login: wait for it (a second at a time, a minute at most)
+-- realm still unknown at login: wait for it, a second at a time for a minute, then every 10
 local function StartWhenRealmKnown(tries)
-  local realm = A.RealmKey() or (tries == 0 and RealmFromTwin(UnitName("player")))
+  local name = UnitName("player")
+  local realm = A.RealmKey() or RealmFromTwin(name, tries >= 60)
   if realm then return Start(realm) end
-  if tries < 60 then C_Timer.After(1, function() StartWhenRealmKnown(tries + 1) end) end
+  C_Timer.After(tries < 60 and 1 or 10, function() StartWhenRealmKnown(tries + 1) end)
 end
 
 events:RegisterEvent("PLAYER_LOGIN")

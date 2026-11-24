@@ -59,16 +59,19 @@ local function ClassColour(c)
 end
 
 local function MailMoney(c)
-  return (c.mail and c.mail.money or 0) + (c.incoming and c.incoming.money or 0)
+  local m = A.Mail(c)
+  return (m and m.money or 0) + (c.incoming and c.incoming.money or 0)
 end
 
 local function MailExpiring(c)
-  local e = c.mail and c.mail.count > 0 and c.mail.expires
+  local m = A.Mail(c)
+  local e = m and m.count > 0 and m.expires
   return e and e - time() < MAIL_WARN_DAYS * 86400
 end
 
 local function MailText(c)
-  local money, items = MailMoney(c), (c.mail and c.mail.items or 0) + (c.incoming and c.incoming.items or 0)
+  local m = A.Mail(c)
+  local money, items = MailMoney(c), (m and m.items or 0) + (c.incoming and c.incoming.items or 0)
   local text = money > 0 and ShortGold(money) or (items > 0 and items .. " items" or "")
   if MailExpiring(c) then text = "|cffff4040!|r " .. text end
   if c.newMail and A.IsMe(c) == false and text == "" then text = "|cff40c0ffnew|r" end
@@ -145,7 +148,7 @@ local function Tooltip(row)
     tt:AddDoubleLine("Worth", Gold(worth.items + (c.money or 0) + MailMoney(c)), nil, nil, nil, 1, 0.82, 0)
     tt:AddDoubleLine(" ", "click: every item and its price", nil, nil, nil, 0.5, 0.5, 0.5)
   end
-  local m = c.mail
+  local m = A.Mail(c)
   if m and m.count > 0 then
     local line = ("%d mail, %d items"):format(m.count, m.items)
     if m.money > 0 then line = line .. ", " .. Gold(m.money) end
