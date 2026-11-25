@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: MeioAlts
 ## Notes: Every character's gold, mail, rested XP, location and more, beside the Esc menu (where Logout is) and in /alts.
-## Version: 1.0.1
+## Version: 1.1.0
 ## Author: MeioNeiz
 ## X-Website: https://github.com/MeioNeiz/MeioAlts
 ## X-License: MIT

@@ -1,13 +1,13 @@
 {
   "title": "Meio Alts",
-  "summary": "Gold, rested XP and mail for every character, in one list beside the Esc menu.",
-  "cfCategory": "Miscellaneous",
+  "summary": "Which alt to play next: rested XP (Well Rested counted), gold and mail for each.",
+  "cfCategory": "Bags & Inventory",
   "cfExtra": [
     "Mail",
     "Quests & Leveling"
   ],
   "wagoCategories": [
-    "Miscellaneous",
+    "Bags & Inventory",
     "Mail",
     "Quests & Leveling"
   ],

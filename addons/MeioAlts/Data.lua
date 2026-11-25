@@ -6,6 +6,16 @@ local SOUL_SHARD = 6265
 local REST_PER_HOUR = 0.05 / 8 -- of a level bar, logged out in an inn or city; a quarter elsewhere
 local REST_OUTSIDE = 0.25
 A.REST_CAP = 1.5 -- of a level bar
+-- Forever's Legacy talent Well Rested: spell 1225478 says rested builds 20% faster and the cap
+-- rises 20% at full rank. Rivals and a player's 170% cap read the cap's rise as added to 150%.
+local WELL_RESTED = 1225478
+A.WELL_RESTED_BOOST = 0.20
+local LEGACY = Constants and Constants.LegacyConsts or {}
+local LEGACY_POINTS = LEGACY.LEGACY_POINTS_TRAIT_CURRENCY_ID or 4225
+local LEGACY_TREES = {
+  LEGACY.LEGACY_TREE_ADVENTURE_ID or 1188, LEGACY.LEGACY_TREE_PROGRESSION_ID or 1189,
+  LEGACY.LEGACY_TREE_PROFESSIONS_ID or 1187,
+}
 
 local me
 local events = CreateFrame("Frame")
@@ -68,15 +78,63 @@ function A.Key(name, realm)
   return Capital(n) .. "-" .. r:gsub("%s", "")
 end
 
+-- Characters on another WoW account, added by name: addons can't read that account's saved
+-- data, so the name (and the realm, for the mailbox) is all there is
+function A.AddOther(text)
+  local key = A.Key(text)
+  if not key then return nil, "realm not known yet, try again in a moment" end
+  local name, realm = key:match("^(.-)%-(.+)$")
+  if name == "" or name:find("[%s%d%p]") then return nil, "not a name: " .. text end
+  if A.db.chars[key] then return nil, key .. " is a character on this account" end
+  if A.db.others[key] then return nil, key .. " is already on the list" end
+  -- the realm's name as shown (with spaces): as typed, else the one playing's
+  local shown = select(2, strsplit("-", text, 2))
+  if not shown or shown == "" then
+    local mine = A.myKey and A.db.chars[A.myKey]
+    shown = mine and A.myKey:match("%-(.+)$") == realm and mine.realm or realm
+  end
+  A.db.others[key] = { name = name, realm = shown, added = time() }
+  A.Changed()
+  return key
+end
+
+function A.RemoveOther(text)
+  local key = A.Key(text)
+  if not (key and A.db.others[key]) then return nil, key end
+  A.db.others[key] = nil
+  A.Changed()
+  return key
+end
+
+-- Sorted by name; realmKey (no spaces) keeps only that realm's
+function A.Others(realmKey)
+  local list = {}
+  for key, o in pairs(A.db.others) do
+    if not realmKey or key:match("%-(.+)$") == realmKey then
+      list[#list + 1] = { key = key, name = o.name, realm = o.realm, other = true }
+    end
+  end
+  table.sort(list, function(a, b) return a.key < b.key end)
+  return list
+end
+
 -- Rested XP now: offline characters keep earning it, faster if they logged out resting
+function A.WellRestedBoost(c)
+  local rank, max = c.wellRested, c.wellRestedMax
+  if not (rank and max and max > 0) then return 0 end
+  return A.WELL_RESTED_BOOST * rank / max
+end
+
 function A.RestedNow(c)
   if c.atMax or not c.xpMax or c.xpMax == 0 then return end
-  local cap = A.REST_CAP * c.xpMax
+  local boost = A.WellRestedBoost(c)
+  local cap = (A.REST_CAP + boost) * c.xpMax
+  local perHour = REST_PER_HOUR * (1 + boost) * c.xpMax
   local rested, rate = c.rested or 0, 0
   if c == me then
-    if c.resting then rate = REST_PER_HOUR * c.xpMax end
+    if c.resting then rate = perHour end
   else
-    rate = REST_PER_HOUR * c.xpMax * (c.resting and 1 or REST_OUTSIDE)
+    rate = perHour * (c.resting and 1 or REST_OUTSIDE)
     rested = rested + rate * (time() - (c.seen or time())) / 3600
   end
   rested = math.min(rested, cap)
@@ -85,6 +143,15 @@ function A.RestedNow(c)
 end
 
 function A.IsMe(c) return c == me end
+
+-- Same realm and faction as the one playing (unknown faction counts): mail, and so gold,
+-- can't go further
+function A.SameGroup(key, c)
+  if not A.myKey then return true end
+  local faction = A.db.chars[A.myKey] and A.db.chars[A.myKey].faction
+  return key:match("%-(.+)$") == A.myKey:match("%-(.+)$")
+    and (not c.faction or not faction or c.faction == faction)
+end
 
 function A.PlayedNow(c)
   if not c.played then return end
@@ -126,6 +193,39 @@ local function Professions(c)
   end
   c.professions = list
 end
+
+-- Legacy talents are per character, in trait trees that may not be loaded early at login:
+-- nothing found leaves the last values. Unspent points come from the trees' currency.
+local function Legacy(c)
+  local T = C_Traits
+  if not (T and T.GetConfigIDByTreeID and T.GetTreeNodes and T.GetNodeInfo) then return end
+  local unspent
+  for _, tree in ipairs(LEGACY_TREES) do
+    local config = T.GetConfigIDByTreeID(tree)
+    if config then
+      if not unspent and T.GetTreeCurrencyInfo then
+        for _, cur in ipairs(T.GetTreeCurrencyInfo(config, tree, false) or {}) do
+          if cur.traitCurrencyID == LEGACY_POINTS then unspent = cur.quantity end
+        end
+      end
+      for _, nodeID in ipairs(T.GetTreeNodes(tree) or {}) do
+        local node = T.GetNodeInfo(config, nodeID)
+        for _, entryID in ipairs(node and node.entryIDs or {}) do
+          local entry = T.GetEntryInfo(config, entryID)
+          local def = entry and entry.definitionID and T.GetDefinitionInfo(entry.definitionID)
+          if def and def.spellID == WELL_RESTED then
+            c.wellRested = node.activeRank or node.currentRank or 0
+            c.wellRestedMax = node.maxRanks
+          end
+        end
+      end
+    end
+  end
+  if unspent then c.legacyPoints = unspent end
+  A.Changed()
+end
+-- a change in how Forever builds these trees must not cost an error at login
+A.ReadLegacy = function() if me then pcall(Legacy, me) end end
 
 -- UnitXPMax is 0 while the player isn't loaded (early login, logout), and level, money
 -- and bags read wrong then too, so such a read keeps the last good values. It can be 0 at
@@ -275,6 +375,12 @@ for _, e in ipairs({
 }) do
   handlers[e] = Soon
 end
+-- events this client may not have: registering an unknown one is an error
+for _, e in ipairs({ "TRAIT_CONFIG_UPDATED", "TRAIT_TREE_CURRENCY_INFO_UPDATED" }) do
+  if not (C_EventUtils and C_EventUtils.IsEventValid) or C_EventUtils.IsEventValid(e) then
+    handlers[e] = A.ReadLegacy
+  end
+end
 
 -- Before the realm fix, a login that read the realm as "" saved the character as "Name-"
 -- beside its "Name-<realm>" entry: fold each into its twin (newer fields by seen, the larger
@@ -371,7 +477,11 @@ local function Start(realm)
   for e in pairs(handlers) do events:RegisterEvent(e) end
   Snapshot()
   Professions(me)
-  C_Timer.After(5, RequestPlayed)
+  A.ReadLegacy()
+  C_Timer.After(5, function()
+    RequestPlayed()
+    A.ReadLegacy()
+  end)
   A.Changed()
 end
 
@@ -389,6 +499,7 @@ events:SetScript("OnEvent", function(_, event, ...)
     MeioAltsDB = MeioAltsDB or {}
     MeioAltsDB.chars = MeioAltsDB.chars or {}
     MeioAltsDB.servers = MeioAltsDB.servers or {}
+    MeioAltsDB.others = MeioAltsDB.others or {}
     A.db = MeioAltsDB
     StartWhenRealmKnown(0)
     return

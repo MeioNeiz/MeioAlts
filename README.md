@@ -1,8 +1,10 @@
 # Meio Alts
 
-All your characters in one list: gold, mail, XP and rested XP, and where they are.
+Levelling alts for Legacy points? See who is fully rested, what each holds in gold and who has
+mail, in one list beside the Esc menu.
 
-For WoW Forever.
+For WoW Forever: counts the Well Rested Legacy talent, and lists your characters on another
+WoW account. A light Altoholic alternative.
 
 ![The Esc game menu: before, the menu alone; with Meio Alts, a list beside it of six
 characters with level, XP and rested bars, gold, mail and zone, and the mouse on Elowen:
@@ -12,38 +14,38 @@ rested XP full in 3d 23h, 3 mail, first expires in 17d 23h](docs/before-after.pn
 
 Press Esc and the list sits beside the game menu, where Log Out is, or type `/alts` for a
 window you can move. Each character joins the list the first time you log it in.
+Right-click a heading to hide the columns you don't need.
 
-- Gold on every character, with a total, and gold waiting in the mailbox
-- Rested XP keeps filling while a character is logged out, with the time until it is full
+- Gold on every character and in their mailboxes, with a total of what you can mail over
+  (this realm and faction; the rest on hover)
+- Rested XP keeps filling while a character is logged out, with the time until it is full,
+  Well Rested included. At login one chat line names the alts that are full or nearly full
 - Mail about to expire is marked; mail you send to your own characters counts at once
-- Hover a character for its hearthstone, free bag slots, durability, professions and time
-  played
+- Hover a character for its hearthstone, free bag slots, durability, Soul Shards,
+  professions, unspent Legacy points and time played
 - At the mailbox, a button beside To lists your characters, and Alt-click on a bag item
-  attaches it
+  attaches it. Characters on your other WoW account can't be friended on Forever: add them
+  with `/alts add Name` and they are in the list too
 
 ![Send Mail at the mailbox with the mouse on the button beside To: a Send to list of four
 characters with their levels](docs/mail.png)
+
+Lighter than Altoholic: nothing on screen until you press Esc. For item counts across your
+characters, Baganator and Syndicator do that well and work alongside it.
 
 Settings: Esc > Options > AddOns > MeioAlts, or `/alts settings`.
 
 - `/alts`: open or close the window
 - `/alts menu on|off`: the list beside the Esc menu
+- `/alts rest on|off`: the chat line at login about full alts
+- `/alts hide|show Column`: hide a column or bring it back
+- `/alts elsewhere on|off`: characters on other realms and factions in the list
+- `/alts add Name` / `/alts remove Name`: a character on your other WoW account
 - `/alts mail on|off`: the mailbox button and Alt-click to attach
 - `/alts mailsend on|off`: Alt-click also sends at once (to your own characters, items only)
 - `/alts forget Name`: take a character off the list
 - `/alts reset`: put the window back in the middle
 - `/alts help`: all of these in chat
-
-## Coming soon
-
-- Characters on your other WoW account in the mail To list: mail your bank alt without
-  typing its name
-- Hide the columns you don't need (right-click a heading): the window narrows to fit
-- The gold total counts what you can actually mail: this realm and faction, the rest on
-  hover
-
-![Coming soon: Send Mail with the To list open: your characters, then Other account with
-two more names](docs/soon.png)
 
 ## Install
 

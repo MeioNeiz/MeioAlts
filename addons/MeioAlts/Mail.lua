@@ -1,4 +1,5 @@
--- Mailbox Send tab: a picker beside the To box fills in one of our alts, and Alt-click on a
+-- Mailbox Send tab: a picker beside the To box fills in one of our alts (and, below them,
+-- characters added by name from another WoW account), and Alt-click on a
 -- bag item attaches it (Shift-click is taken: chat link, split stack). Optional quick send
 -- (A.db.mailSend): that Alt-click also sends, only to our own alts and only item-only mail.
 local _, A = ...
@@ -18,12 +19,7 @@ local function SendOn() return On() and A.db.mailSend == true end
 
 local function Realm(key) return key:match("%-(.+)$") end
 
--- Same realm and faction as the one playing (unknown faction counts): mail can't go further
-local function Mailable(key, c)
-  local faction = A.db.chars[A.myKey].faction
-  return not A.IsMe(c) and Realm(key) == Realm(A.myKey)
-    and (not c.faction or not faction or c.faction == faction)
-end
+local function Mailable(key, c) return not A.IsMe(c) and A.SameGroup(key, c) end
 
 function A.MailAlts()
   local list = {}
@@ -37,7 +33,13 @@ function A.MailAlts()
   return list
 end
 
--- The To box names one of the characters the picker offers
+-- Faction unknown, so all of this realm's: the server says if one can't be mailed
+function A.MailOthers() return A.Others(Realm(A.myKey)) end
+
+local function Offered() return #A.MailAlts() + #A.MailOthers() end
+
+-- The To box names one of our characters the picker offers. Not one added by name from
+-- another account: a typo there would send to a stranger without a look.
 local function AltInToBox()
   local text = strtrim(SendMailNameEditBox:GetText() or "")
   if text == "" then return end
@@ -99,27 +101,36 @@ local function OnModifiedItemClick(_, loc)
   QuickSend()
 end
 
+local function SendTo(name)
+  SendMailNameEditBox:SetText(name)
+  SendMailNameEditBox:ClearFocus()
+  SendMailFrame_CanSend()
+end
+
 local function PickerMenu(owner, root)
-  local alts = A.MailAlts()
-  root:CreateTitle("Send to")
+  local alts, others = A.MailAlts(), A.MailOthers()
+  if #alts > 0 then root:CreateTitle("Send to") end
   for _, c in ipairs(alts) do
-    root:CreateButton(AltLabel(c), function()
-      SendMailNameEditBox:SetText(c.name)
-      SendMailNameEditBox:ClearFocus()
-      SendMailFrame_CanSend()
-    end)
+    root:CreateButton(AltLabel(c), function() SendTo(c.name) end)
+  end
+  if #others == 0 then return end
+  if #alts > 0 and root.CreateDivider then root:CreateDivider() end
+  root:CreateTitle("Other account")
+  for _, o in ipairs(others) do
+    root:CreateButton(o.name, function() SendTo(o.name) end)
   end
 end
 
 local function PickerTooltip(self)
   GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
   GameTooltip:AddLine("Your alts")
-  if #A.MailAlts() == 0 then
+  if Offered() == 0 then
     GameTooltip:AddLine("No other character on this realm and faction yet: log in once on "
       .. "each to add it.", 1, 1, 1, true)
   else
     GameTooltip:AddLine("Click: pick one of your characters to send to", 1, 1, 1, true)
   end
+  GameTooltip:AddLine("Other account: |cffffd100/alts add Name|r", 0.7, 0.7, 0.7)
   local alt = SendOn() and "Alt-click a bag item: attach it, and send at once when To is one "
     .. "of your alts and no money or COD is set" or "Alt-click a bag item: attach it"
   GameTooltip:AddLine(alt, 1, 1, 1, true)
@@ -129,7 +140,7 @@ end
 local function UpdatePicker()
   if not picker then return end
   picker:SetShown(On())
-  picker:SetEnabled(#A.MailAlts() > 0)
+  picker:SetEnabled(Offered() > 0)
 end
 
 local function CreatePicker()
@@ -211,3 +222,4 @@ end
 
 -- Settings checkbox changes, without the chat line
 function A.MailSettingChanged() UpdatePicker() end
+A.UpdateMailPicker = UpdatePicker
