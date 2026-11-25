@@ -21,6 +21,11 @@
       "file": "tooltip.png",
       "title": "A character's details",
       "description": "The /alts window with the mouse on a priest: rested XP filling while logged out, mail, bags and professions"
+    },
+    {
+      "file": "mail.png",
+      "title": "Mail your alts",
+      "description": "At the mailbox, the button beside To lists your characters on this realm: click one to fill it in"
     }
   ]
 }

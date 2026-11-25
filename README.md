@@ -21,6 +21,9 @@ window you can move. Each character joins the list the first time you log it in.
 - At the mailbox, a button beside To lists your characters, and Alt-click on a bag item
   attaches it
 
+![Send Mail at the mailbox with the mouse on the button beside To: a Send to list of four
+characters with their levels](docs/mail.png)
+
 Settings: Esc > Options > AddOns > MeioAlts, or `/alts settings`.
 
 - `/alts`: open or close the window
