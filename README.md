@@ -14,7 +14,8 @@ Well Rested 5/5 counted, rested XP full in 3d 18h, 2 Legacy points to spend](doc
 
 Press Esc and the list sits beside the game menu, where Log Out is, or type `/alts` for a
 window you can move. Each character joins the list the first time you log it in.
-Right-click a heading to hide the columns you don't need.
+Click a heading to sort by it (click again to reverse), or right-click to hide the columns
+you don't need.
 
 - Gold on every character and in their mailboxes, with a total of what you can mail over
   (this realm and faction; the rest on hover)
@@ -39,6 +40,7 @@ Settings: Esc > Options > AddOns > MeioAlts, or `/alts settings`.
 - `/alts menu on|off`: the list beside the Esc menu
 - `/alts rest on|off`: the chat line at login about full alts
 - `/alts hide|show Column`: hide a column or bring it back
+- `/alts sort Column|off`: sort the list by a column (`off`: you first, then by level)
 - `/alts elsewhere on|off`: characters on other realms and factions in the list
 - `/alts add Name` / `/alts remove Name`: a character on your other WoW account
 - `/alts mail on|off`: the mailbox button and Alt-click to attach

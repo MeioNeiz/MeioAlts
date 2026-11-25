@@ -1,5 +1,10 @@
 # Meio Alts
 
+## 1.2.0
+
+- Click a column heading to sort by it: gold, rested XP, level, last seen and the rest.
+  Click again to reverse, a third time for the usual order (you first, then by level), or
+  `/alts sort Gold`. Characters on this realm and faction stay above the others
 ## 1.1.0
 
 - Rested XP counts Forever's Well Rested Legacy talent: faster filling and a higher cap, so

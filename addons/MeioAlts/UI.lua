@@ -92,6 +92,8 @@ end
 
 -- here[c]: same realm and faction as the one playing, so its gold can be mailed over
 local here = {}
+-- set after RestedHidden; A.db.sort = { key, desc } from a left-click on a heading
+local SortValue
 
 local function Sorted()
   local list = {}
@@ -100,9 +102,19 @@ local function Sorted()
     here[c] = A.SameGroup(key, c)
     if here[c] or A.db.elsewhere ~= false then list[#list + 1] = c end
   end
+  local sort = A.db.sort
+  if sort and A.db.hidden and A.db.hidden[sort[1]] then sort = nil end
+  local values = {}
+  if sort then
+    for _, c in ipairs(list) do values[c] = SortValue(c, sort[1]) end
+  end
   table.sort(list, function(a, b)
-    if A.IsMe(a) ~= A.IsMe(b) then return A.IsMe(a) end
+    if not sort and A.IsMe(a) ~= A.IsMe(b) then return A.IsMe(a) end
     if here[a] ~= here[b] then return here[a] end
+    if sort and values[a] ~= values[b] then
+      if sort[2] then return values[a] > values[b] end
+      return values[a] < values[b]
+    end
     if (a.level or 0) ~= (b.level or 0) then return (a.level or 0) > (b.level or 0) end
     return a.name < b.name
   end)
@@ -135,6 +147,29 @@ local function Groups()
 end
 
 local function RestedHidden() return HideRested and HideRested.IsHidden() end
+
+-- the number the cell shows; max-level XP sorts after everyone levelling
+SortValue = function(c, key)
+  if key == "name" then return c.name:lower() end
+  if key == "level" then return c.level or 0 end
+  if key == "xp" then
+    if c.atMax or not c.xpMax or c.xpMax == 0 then return -1 end
+    return RestedHidden() and c.xp / c.xpMax or A.RestedNow(c) / c.xpMax
+  end
+  if key == "money" then return c.money or 0 end
+  if key == "items" then
+    local w = Worth(c)
+    return w and w.items or 0
+  end
+  if key == "mail" then
+    local m = A.Mail(c)
+    local items = (m and m.items or 0) + (c.incoming and c.incoming.items or 0)
+    return MailMoney(c) + items / 1000
+  end
+  if key == "where" then return (c.zone or ""):lower() end
+  if key == "seen" then return A.IsMe(c) and math.huge or c.seen or 0 end
+  return 0
+end
 
 local function RestedLines(tt, c)
   local rested, cap, hours = A.RestedNow(c)
@@ -441,6 +476,10 @@ end
 local function Refresh()
   if not (frame and frame:IsShown()) then return end
   frame.xpHeader:SetText(RestedHidden() and "XP" or "XP / rested")
+  local sortKey = A.db.sort and A.db.sort[1]
+  for key, fs in pairs(frame.headers) do
+    fs:SetFontObject(key == sortKey and "GameFontHighlightSmall" or "GameFontNormalSmall")
+  end
   local list = Sorted()
   local total, mailTotal, itemTotal = 0, 0, 0
   for i, c in ipairs(list) do
@@ -504,6 +543,45 @@ local function PlaceAlone()
   end
 end
 
+local function ColumnAt(heads)
+  local x = GetCursorPosition() / heads:GetEffectiveScale() - heads:GetLeft()
+  for _, col in ipairs(cols) do
+    if Shown(col.key) and x >= col.x - GAP / 2 and x < col.x + col.w + GAP / 2 then return col end
+  end
+end
+
+-- numbers most first, names and zones A to Z
+local function MostFirst(key) return key ~= "name" and key ~= "where" end
+
+local function SortName(key, desc)
+  for _, col in ipairs(cols) do
+    if col.key == key then
+      local order = MostFirst(key) and (desc and "most first" or "least first")
+        or (desc and "Z to A" or "A to Z")
+      if key == "seen" then order = desc and "latest first" or "longest ago first" end
+      return "Sorted by " .. (col.menu or col.label) .. ", " .. order
+    end
+  end
+  return "Sorted by " .. key
+end
+
+-- a heading's first click sorts its natural way, the second reverses, the third goes back to
+-- the usual order (you, then by level)
+function A.SortBy(key)
+  local cur = A.db.sort
+  if not cur or cur[1] ~= key then
+    A.db.sort = { key, MostFirst(key) }
+  elseif cur[2] == MostFirst(key) then
+    cur[2] = not cur[2]
+  else
+    A.db.sort = nil
+  end
+  Refresh()
+  if GameTooltip:IsShown() and GameTooltip:GetOwner() == frame.heads then
+    frame.heads:GetScript("OnEnter")(frame.heads)
+  end
+end
+
 local function Create()
   cols = {}
   local worth = Meionomics and Meionomics.Worth
@@ -551,10 +629,17 @@ local function Create()
   heads:SetPoint("TOPLEFT", PAD, -PAD + 2)
   heads:SetPoint("RIGHT", -PAD, 0)
   heads:SetHeight(ROW_H - 2)
-  heads:RegisterForClicks("RightButtonUp")
-  heads:SetScript("OnClick", function(self) A.ColumnMenu(self) end)
+  heads:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  heads:SetScript("OnClick", function(self, button)
+    if button == "RightButton" then return A.ColumnMenu(self) end
+    local col = ColumnAt(self)
+    if col then A.SortBy(col.key) end
+  end)
   heads:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    local sort = A.db.sort
+    if sort then GameTooltip:AddLine(SortName(sort[1], sort[2]), 1, 1, 1) end
+    GameTooltip:AddLine("Left-click a heading: sort by it (again: reverse, then back)")
     GameTooltip:AddLine("Right-click: choose which columns show")
     GameTooltip:Show()
   end)
@@ -673,6 +758,28 @@ local function ColumnNames()
   return table.concat(list, ", ")
 end
 
+local function SortCommand(arg)
+  local word = arg and arg:lower() or ""
+  if word == "off" then
+    A.db.sort = nil
+    A.Changed()
+    return Print("usual order: you first, then by level")
+  end
+  local col = (word == "name" or word == "character") and cols[1] or FindColumn(word)
+  if not col then
+    return Print("sort by which column? |cffffd100/alts sort Column|r: " .. ColumnNames()
+      .. ", or |cffffd100off|r")
+  end
+  if not Shown(col.key) then
+    return Print((col.menu or col.label) .. " is hidden: |cffffd100/alts show "
+      .. (col.menu or col.label):lower() .. "|r first")
+  end
+  A.SortBy(col.key)
+  local sort = A.db.sort
+  Print(sort and (SortName(sort[1], sort[2]):gsub("^S", "s"))
+    or "usual order: you first, then by level")
+end
+
 local function ShowColumn(arg, on)
   local col = FindColumn(arg)
   if not col then
@@ -764,6 +871,8 @@ local function Help()
     "  |cffffd100/alts remove Name[-Realm]|r - take an other-account character off again",
     "  |cffffd100/alts hide||show Column|r - narrow the list (or right-click its headings): "
       .. ColumnNames(),
+    "  |cffffd100/alts sort Column||off|r - sort the list (or left-click a heading; again "
+      .. "reverses)",
     "  |cffffd100/alts rest on||off|r - at login, a chat line names alts that are fully "
       .. "rested or will be within a day" .. Now(A.db.restAlert ~= false),
     "  |cffffd100/alts elsewhere on||off|r - characters on another realm or faction in the "
@@ -856,6 +965,8 @@ SlashCmdList.MEIOALTS = function(msg)
     Switch(arg, A.db.elsewhere ~= false, A.SetElsewhere)
   elseif cmd == "hide" or cmd == "show" then
     ShowColumn(arg, cmd == "show")
+  elseif cmd == "sort" then
+    SortCommand(arg)
   elseif cmd == "reset" then
     A.ResetPosition()
     Print("window back in the middle of the screen")
