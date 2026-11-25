@@ -8,7 +8,7 @@ WoW account. A light Altoholic alternative.
 
 ![The Esc game menu: before, the menu alone; with Meio Alts, a list beside it of six
 characters with level, XP and rested bars, gold, mail and zone, and the mouse on Elowen:
-rested XP full in 3d 23h, 3 mail, first expires in 17d 23h](docs/before-after.png)
+Well Rested 5/5 counted, rested XP full in 3d 18h, 2 Legacy points to spend](docs/before-after.png)
 
 ## What it does
 

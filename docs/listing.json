@@ -15,12 +15,12 @@
     {
       "file": "before-after.png",
       "title": "Before and after",
-      "description": "The Esc game menu alone, then every character listed beside it, one hovered: rested XP full in 3d 23h, mail expiring in 17d"
+      "description": "The Esc game menu alone, then every character listed beside it, one hovered: Well Rested counted, rested XP full in 3d 18h, Legacy points to spend"
     },
     {
       "file": "tooltip.png",
       "title": "A character's details",
-      "description": "The /alts window with the mouse on a priest: rested XP filling while logged out, mail, bags and professions"
+      "description": "The /alts window narrowed to the columns you want, the mouse on a level 60 warrior: mail expiring within a day, bags nearly full, durability, professions"
     },
     {
       "file": "mail.png",
