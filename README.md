@@ -5,8 +5,8 @@ All your characters in one list: gold, mail, XP and rested XP, and where they ar
 For WoW Forever.
 
 ![The Esc game menu: before, the menu alone; with Meio Alts, a list beside it of six
-characters with level, XP and rested XP bars, gold, mail, zone and when each was last
-played](docs/before-after.png)
+characters with level, XP and rested bars, gold, mail and zone, and the mouse on Elowen:
+rested XP full in 3d 23h, 3 mail, first expires in 17d 23h](docs/before-after.png)
 
 ## What it does
 
