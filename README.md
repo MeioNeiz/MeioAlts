@@ -35,6 +35,9 @@ Settings: Esc > Options > AddOns > MeioAlts, or `/alts settings`.
 
 - Characters on your other WoW account in the mail To list: mail your bank alt without
   typing its name
+- Hide the columns you don't need (right-click a heading): the window narrows to fit
+- The gold total counts what you can actually mail: this realm and faction, the rest on
+  hover
 
 ![Coming soon: Send Mail with the To list open: your characters, then Other account with
 two more names](docs/soon.png)
