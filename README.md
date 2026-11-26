@@ -3,8 +3,8 @@
 Levelling alts for Legacy points? See who is fully rested, what each holds in gold and who has
 mail, in one list beside the Esc menu.
 
-For WoW Forever: counts the Well Rested Legacy talent, and lists your characters on another
-WoW account. A light Altoholic alternative.
+For WoW Forever: counts the Well Rested Legacy talent and shows each alt's unspent Legacy
+points. A light Altoholic alternative.
 
 ![The Esc game menu: before, the menu alone; with Meio Alts, a list beside it of six
 characters with level, XP and rested bars, gold, mail and zone, and the mouse on Elowen:
